@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generace CPU a GPU — Intel, AMD, NVIDIA</title>
+  <link rel="stylesheet" href="cpu-gpu-list.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Generace CPU a GPU</h1>
+
+  <div class="tabs" id="category-tabs">
+    <button class="tab active" onclick="setCategory('cpu_intel', this)">CPU Intel</button>
+    <button class="tab" onclick="setCategory('cpu_amd', this)">CPU AMD</button>
+    <button class="tab" onclick="setCategory('gpu_nvidia', this)">GPU NVIDIA</button>
+    <button class="tab" onclick="setCategory('gpu_amd', this)">GPU AMD</button>
+  </div>
+
+  <input class="search" type="text" placeholder="Hledat generaci..." oninput="filterCards(this.value)" id="search-input">
+
+  <div class="gen-list" id="gen-list"></div>
+</div>
+
+<script>
+const data = {
+  cpu_intel: [
+    { name:"Pentium / Core (Netburst)", year:"1999–2006", node:"180–90nm", badge:"Intel", tagline:"První masové desktop CPU. Vysoké takty, ale neefektivní pipeline. Skončilo přehříváním u Prescottu.", ipc:"Nízké", tdp:"25–130W", cores:"1", tech:["Hyper-Threading","NetBurst","SSE2","64-bit EM64T"] },
+    { name:"Core (Yonah/Merom) Gen 1", year:"2006–2007", node:"65nm", badge:"Intel", tagline:"Revoluční architektura Core — zlom v efektivitě. IPC skok oproti NetBurst o ~40 %.", ipc:"Střední", tdp:"35–65W", cores:"2", tech:["Core mikroarchitektura","SSE3","VT-x","64-bit"] },
+    { name:"Penryn Gen 2", year:"2008", node:"45nm", badge:"Intel", tagline:"Shrink na 45nm, první použití high-k dielektrika. Lepší OC potenciál.", ipc:"Střední+", tdp:"25–65W", cores:"2–4", tech:["High-k metal gate","SSE4.1","Hafnium gate"] },
+    { name:"Nehalem / Westmere Gen 1", year:"2008–2010", node:"45/32nm", badge:"Intel", tagline:"Integrovaný memory controller, PCIe přímo na CPU. Zrození platformy LGA1156/1366.", ipc:"Vysoké", tdp:"45–130W", cores:"2–6", tech:["IMC","HyperThreading","QuickPath","Turbo Boost 1.0","SSE4.2"] },
+    { name:"Sandy Bridge Gen 2", year:"2011", node:"32nm", badge:"Intel", tagline:"Integrované GPU, ring bus, velký IPC skok. Jedna z nejlepších generací v historii Intel.", ipc:"Velmi vysoké", tdp:"35–95W", cores:"2–6", tech:["Ring Bus","Intel HD Graphics","AVX","Turbo Boost 2.0","Quick Sync"] },
+    { name:"Ivy Bridge Gen 3", year:"2012", node:"22nm", badge:"Intel", tagline:"První 3D FinFET tranzistory (Tri-Gate). Menší spotřeba, lepší iGPU.", ipc:"Velmi vysoké", tdp:"35–77W", cores:"2–4", tech:["FinFET Tri-Gate","PCIe 3.0","DX11 iGPU","USB 3.0"] },
+    { name:"Haswell Gen 4", year:"2013–2014", node:"22nm", badge:"Intel", tagline:"Velký skok v iGPU výkonu (GT3e s eDRAM). Přidán AVX2 a FMA3.", ipc:"Velmi vysoké+", tdp:"15–84W", cores:"2–4", tech:["AVX2","FMA3","Iris Pro (eDRAM)","Transactional memory","VT-d"] },
+    { name:"Broadwell Gen 5", year:"2015", node:"14nm", badge:"Intel", tagline:"První 14nm — jen pro mobile. Skromné zlepšení IPC, velký skok v efektivitě.", ipc:"Velmi vysoké+", tdp:"7,5–65W", cores:"2–4", tech:["14nm","eDRAM L4","Iris Pro 6200"] },
+    { name:"Skylake Gen 6", year:"2015–2016", node:"14nm", badge:"Intel", tagline:"Nová platforma LGA1151, DDR4, USB 3.1. Základ pro Kaby/Coffee/Comet lake.", ipc:"+5 % vs Broadwell", tdp:"15–91W", cores:"2–4", tech:["DDR4","USB 3.1","Thunderbolt 3","Speed Shift","SGX"] },
+    { name:"Kaby Lake Gen 7", year:"2016–2017", node:"14nm+", badge:"Intel", tagline:"Vylepšený 14nm+ proces. Vyšší takty, HW podpora 4K HEVC a VP9.", ipc:"+5 % vs Skylake", tdp:"15–91W", cores:"2–4", tech:["14nm+","Optane Memory","HEVC 10-bit HW","Speed Shift 2.0"] },
+    { name:"Coffee Lake Gen 8–9", year:"2017–2019", node:"14nm++", badge:"Intel", tagline:"Skok na 6 jader (desktop). i9 s 8 jádry. Odpověď na AMD Ryzen.", ipc:"+3–5 %", tdp:"15–95W", cores:"2–8", tech:["14nm++","6 jader mainstream","Intel Mesh","L3 cache slab"] },
+    { name:"Ice Lake Gen 10 (mobile)", year:"2019", node:"10nm", badge:"Intel", tagline:"První sériový 10nm. Iris Plus iGPU (Gen11). WiFi 6 integrovaný.", ipc:"+18 % IPC (Sunny Cove)", tdp:"9–28W", cores:"2–4", tech:["Sunny Cove","Gen11 iGPU","WiFi 6","Thunderbolt 3","DL Boost"] },
+    { name:"Tiger Lake Gen 11 (mobile)", year:"2020", node:"10nm+", badge:"Intel", tagline:"Iris Xe iGPU, Thunderbolt 4, PCIe 4.0. Dominoval ultrabookům.", ipc:"+19 % (Willow Cove)", tdp:"7–28W", cores:"2–4", tech:["Willow Cove","Iris Xe","PCIe 4.0","TB4","LP DDR5"] },
+    { name:"Alder Lake Gen 12", year:"2021", node:"Intel 7 (10nm)", badge:"Intel", tagline:"Hybridní architektura P+E core. Odpověď na Apple M1. Thread Director pro Windows 11.", ipc:"+19 % P-core", tdp:"9–125W", cores:"až 16 (8P+8E)", tech:["P-core (Golden Cove)","E-core (Gracemont)","DDR5","PCIe 5.0","Thread Director"] },
+    { name:"Raptor Lake Gen 13–14", year:"2022–2023", node:"Intel 7", badge:"Intel", tagline:"Více E-core (až 8+16), vyšší takty. Velký výkon za cenu vyššího TDP.", ipc:"+15 % multi-thread", tdp:"9–253W", cores:"až 24 (8P+16E)", tech:["Raptor Cove P-core","Gracemont E-core","DDR5-5600","PCIe 5.0"] },
+    { name:"Meteor Lake Gen 14 (mobile)", year:"2023", node:"Intel 4 (7nm)", badge:"Intel", tagline:"Chiplet/tile design. NPU pro AI. Nová Arc iGPU.", ipc:"Mírný skok", tdp:"9–28W", cores:"4–6 P+8 E", tech:["Intel 4 (EUV)","Tiled architecture","NPU (AI)","Arc Xe-LPG iGPU","LP E5"] },
+    { name:"Arrow Lake Gen 15 (desktop)", year:"2024", node:"Intel 20A/TSMC N3/N5", badge:"Intel", tagline:"Multi-process chiplet. Větší skok v efektivitě, bez Hyper-Threading na P-core.", ipc:"+14 % ST", tdp:"9–125W", cores:"8P+16E", tech:["TSMC N3 P-tiles","NPU","PCIe 5.0","DDR5","bez HT"] },
+    { name:"Lunar Lake (mobile)", year:"2024", node:"TSMC N3B", badge:"Intel", tagline:"Extrémní efektivita, integrovaný LP-DDR5X na package. NPU 2. gen.", ipc:"Srovnatelný Apple M3", tdp:"8–17W", cores:"4P+4E", tech:["TSMC N3B","48 TOPS NPU","Arc 8-core iGPU","on-package RAM"] },
+  ],
+  cpu_amd: [
+    { name:"K5 / K6", year:"1996–1999", node:"350–250nm", badge:"AMD", tagline:"AMD vs Intel Pentium. K6-2 přidal 3DNow! SIMD instrukce.", ipc:"Podobné Pentium", tdp:"7–20W", cores:"1", tech:["3DNow!","x86","Socket 7/Super7"] },
+    { name:"Athlon / Thunderbird", year:"1999–2001", node:"250–180nm", badge:"AMD", tagline:"Historický zlom — AMD porazilo Intel ve výkonu. 1 GHz jako první.", ipc:"Vyšší než P3", tdp:"40–72W", cores:"1", tech:["EV6 bus","FPU","200/266MHz FSB"] },
+    { name:"Athlon 64 / FX (K8)", year:"2003–2006", node:"130–90nm", badge:"AMD", tagline:"AMD jako první s 64-bit x86-64 (AMD64). Integrovaný memory controller.", ipc:"Vyšší než P4", tdp:"62–110W", cores:"1–2", tech:["AMD64 (x86-64)","HyperTransport","NX bit","IMC","SSE2"] },
+    { name:"Phenom / Phenom II (K10)", year:"2007–2012", node:"65–45nm", badge:"AMD", tagline:"První nativní quad-core. Phenom II byl kompetitivní s Core 2 Quad.", ipc:"Mírně pod Core 2", tdp:"65–140W", cores:"2–6", tech:["HyperTransport 3","AM2+/AM3","DDR3","SSE4a"] },
+    { name:"Bulldozer / Piledriver (FX)", year:"2011–2014", node:"32nm", badge:"AMD", tagline:"Nová modulová architektura — 2 jádra sdílí FPU. Kontroverzní design, nižší IPC.", ipc:"Nižší než Sandy Bridge", tdp:"65–220W", cores:"4–8", tech:["Modul 2+1FPU","CMT","FMA4","XOP","AM3+"] },
+    { name:"Excavator / Carrizo (APU)", year:"2015–2016", node:"28nm", badge:"AMD", tagline:"Poslední Bulldozer odvětvení. Lepší efektivita, silné iGPU (GCN).", ipc:"Střední", tdp:"15–65W", cores:"2–4", tech:["GCN iGPU","DDR4 (APU)","HSA","FP4 socket"] },
+    { name:"Zen 1 (Ryzen 1000)", year:"2017", node:"14nm (GF)", badge:"AMD", tagline:"REVOLUČNÍ comeback. IPC skok +52 % oproti Excavatoru. Ryzen přepisoval trh.", ipc:"+52 % vs Excavator", tdp:"15–95W", cores:"4–8 (16 EPYC)", tech:["Zen mikroarchitektura","SMT","SenseMI","AM4","DDR4","PCIe 3.0"] },
+    { name:"Zen+ (Ryzen 2000)", year:"2018", node:"12nm (GF)", badge:"AMD", tagline:"Shrink a optimalizace. XFR2, Precision Boost 2, nižší latence L3 cache.", ipc:"+3 % vs Zen 1", tdp:"15–105W", cores:"4–8", tech:["12nm","Precision Boost 2","XFR2","StoreMI"] },
+    { name:"Zen 2 (Ryzen 3000)", year:"2019", node:"7nm (TSMC)", badge:"AMD", tagline:"Přechod na 7nm a chiplet design. PCIe 4.0, 2x L3 cache. Porážka Intel v IPC.", ipc:"+15 % vs Zen+", tdp:"15–105W", cores:"6–16 (64 EPYC)", tech:["7nm","Chiplet + I/O die","PCIe 4.0","DDR4-3200","2x L3 cache"] },
+    { name:"Zen 3 (Ryzen 5000)", year:"2020", node:"7nm TSMC N7P", badge:"AMD", tagline:"Unifikovaný 8-core CCX — všechna jádra vidí celou L3. Porážka Intel v herním výkonu.", ipc:"+19 % vs Zen 2", tdp:"15–105W", cores:"6–16", tech:["Unified CCX","32MB L3 per CCD","PCIe 4.0","AM4","FCLK 1800MHz"] },
+    { name:"Zen 4 (Ryzen 7000)", year:"2022", node:"5nm TSMC N5", badge:"AMD", tagline:"Nová platforma AM5 (LGA), DDR5, PCIe 5.0, integrované RDNA2 iGPU.", ipc:"+13 % vs Zen 3", tdp:"35–170W", cores:"6–16 (96 EPYC)", tech:["5nm","AM5 LGA1718","DDR5","PCIe 5.0","iGPU RDNA2","AVX-512"] },
+    { name:"Zen 4c (Ryzen/EPYC)", year:"2023", node:"4nm TSMC", badge:"AMD", tagline:"Kompaktní Zen 4 jádra — 3x hustota. Primárně pro server a efektivní segmenty.", ipc:"=Zen 4", tdp:"Nižší", cores:"až 128 (EPYC)", tech:["Dense core","3x vyšší hustota","Genoa-X 3D V-cache"] },
+    { name:"Zen 5 (Ryzen 9000)", year:"2024", node:"4nm TSMC N4", badge:"AMD", tagline:"Přepracovaný frontend, 2x šířka fetch, větší OoO buffery. Velký IPC skok.", ipc:"+16 % IPC avg", tdp:"35–170W", cores:"6–16", tech:["TSMC N4","Zdvojená šířka frontendu","AVX-512 vylepšení","AM5","DDR5-5600"] },
+  ],
+  gpu_nvidia: [
+    { name:"GeForce 256 / GeForce 2", year:"1999–2001", node:"220nm", badge:"NVIDIA", tagline:"Vynález T&L hardware (Transformation & Lighting). Vznik pojmu GPU.", ipc:"–", tdp:"15–30W", cores:"–", tech:["Hardware T&L","32-bit barvy","HDTV výstup"] },
+    { name:"GeForce 3 / 4 Ti (NV20/25)", year:"2001–2002", node:"150nm", badge:"NVIDIA", tagline:"První programovatelné shadery (Vertex/Pixel shader 1.x). DirectX 8.", ipc:"–", tdp:"40–60W", cores:"–", tech:["Vertex Shader 1.1","Pixel Shader 1.4","DX8","MSAA"] },
+    { name:"GeForce 5 (FX, NV30)", year:"2003", node:"130nm", badge:"NVIDIA", tagline:"Zklamání generace. Přehřívání, složitý shader engine. Konkurence ATI Radeon 9700 vítězila.", ipc:"–", tdp:"70–80W", cores:"–", tech:["Pixel Shader 2.0a","CineFX engine","128-bit barvy"] },
+    { name:"GeForce 6 / 7 (NV40/G70)", year:"2004–2006", node:"130–90nm", badge:"NVIDIA", tagline:"Silná generace. SLI návrat, HDR, PureVideo HW dekódování. G70 = GTX 7800.", ipc:"–", tdp:"60–110W", cores:"–", tech:["SM 3.0","SLI","PureVideo","Shader Model 3.0","HDR"] },
+    { name:"GeForce 8 / 9 (Tesla/G80)", year:"2006–2008", node:"90–65nm", badge:"NVIDIA", tagline:"REVOLUCIONÁLNÍ! Unified shader model, CUDA, DX10. G80 přepsal GPU architektury.", ipc:"–", tdp:"100–175W", cores:"128–128", tech:["Unified Shaders","CUDA","DirectX 10","GPGPU","PhysX"] },
+    { name:"GeForce GTX 200 (GT200)", year:"2008–2009", node:"65nm", badge:"NVIDIA", tagline:"Více shader procesorů, double precision FP64. Masivní čip (754mm²).", ipc:"–", tdp:"150–236W", cores:"240", tech:["240 CUDA cores","FP64","PhysX","3D Vision"] },
+    { name:"GeForce GTX 400/500 (Fermi)", year:"2010–2011", node:"40nm", badge:"NVIDIA", tagline:"CUDA 2.0, ECC paměť, L2 cache, OpenCL. Výpočetní GPU éra. Ale vysoký TDP.", ipc:"–", tdp:"150–244W", cores:"512", tech:["CUDA 2.0","L1/L2 cache","ECC","OpenCL 1.1","Tessellation"] },
+    { name:"GeForce GTX 600/700 (Kepler)", year:"2012–2013", node:"28nm", badge:"NVIDIA", tagline:"GPU Boost, TXAA, FXAA. Efektivní architektura. GTX 680 dominovalo trhu.", ipc:"–", tdp:"150–250W", cores:"1536–2880", tech:["GPU Boost","TXAA","FXAA","GeForce Experience","CUDA 3.0"] },
+    { name:"GeForce GTX 900 (Maxwell)", year:"2014–2015", node:"28nm", badge:"NVIDIA", tagline:"Výrazně lepší efektivita. VXGI (voxel GI), MFAA. GTX 980 Ti exceloval.", ipc:"–", tdp:"120–250W", cores:"2048–3072", tech:["Maxwell arch","MFAA","VXAO","DSR","GameWorks"] },
+    { name:"GeForce GTX 1000 (Pascal)", year:"2016–2017", node:"16nm FinFET", badge:"NVIDIA", tagline:"Skok na 16nm. GTX 1080 Ti legendární. HBM2 na P100, GDDR5X pro spotřební. Ansel.", ipc:"–", tdp:"75–250W", cores:"1280–3840", tech:["16nm FinFET","NVLink","FP16","Ansel","ShadowPlay","DX12"] },
+    { name:"GeForce RTX 2000 (Turing)", year:"2018", node:"12nm NFF", badge:"NVIDIA", tagline:"HW Ray Tracing, Tensor cores (DLSS 1.0). První RT GPU. Drahé, DLSS 1.0 průměrné.", ipc:"–", tdp:"75–260W", cores:"1920–4352", tech:["RT Cores","Tensor Cores","DLSS 1.0","Mesh Shaders","VRS"] },
+    { name:"GeForce RTX 3000 (Ampere)", year:"2020", node:"Samsung 8nm", badge:"NVIDIA", tagline:"DLSS 2.0 (skvělé), 2x RT výkon, GDDR6X. RTX 3080/3090 dominantní generace.", ipc:"–", tdp:"80–350W", cores:"3584–10496", tech:["2x RT","DLSS 2.0","GDDR6X","AV1 encode","Resizable BAR","PCIe 4.0"] },
+    { name:"GeForce RTX 4000 (Ada Lovelace)", year:"2022", node:"TSMC 4nm", badge:"NVIDIA", tagline:"DLSS 3 Frame Generation, 4x RT vs Ampere. RTX 4090 rekordní výkon. Vysoké ceny.", ipc:"–", tdp:"70–450W", cores:"3840–16384", tech:["DLSS 3 Frame Gen","4nm TSMC","AV1 encode/decode","Shader Execution Reorder","DLSS 3.5 Ray Recon"] },
+    { name:"GeForce RTX 5000 (Blackwell)", year:"2025", node:"TSMC 4nm N4P", badge:"NVIDIA", tagline:"DLSS 4 Multi Frame Gen (až 8x frames!), GB202 obří čip, GDDR7. Nová MFG éra.", ipc:"–", tdp:"250–600W", cores:"7680–21760", tech:["DLSS 4 Multi Frame Gen","GDDR7","Transformer AI model DLSS","GB202 chip","PCIe 5.0"] },
+  ],
+  gpu_amd: [
+    { name:"Radeon R100/R200 (2000–2002)", year:"2000–2002", node:"180nm", badge:"AMD", tagline:"HyperZ, komprese hloubky. R200 přinesl Pixel Shader 1.4.", ipc:"–", tdp:"20–40W", cores:"–", tech:["HyperZ","Pixel Shader 1.4","Truform","FSAA"] },
+    { name:"Radeon R300/R400 (9700–X800)", year:"2002–2005", node:"150–110nm", badge:"AMD", tagline:"R300 (Radeon 9700 Pro) historicky porazilo GeForce 4 Ti. Shader Model 2.0.", ipc:"–", tdp:"55–80W", cores:"–", tech:["SM 2.0","SMARTSHADER","SMOOTHVISION","HyperZ III"] },
+    { name:"Radeon X1000 (R500)", year:"2005–2007", node:"90nm", badge:"AMD", tagline:"SM 3.0, Shader Model 3.0. Kompetitivní s GeForce 7.", ipc:"–", tdp:"80–110W", cores:"–", tech:["Shader Model 3.0","AVIVO (video)","CrossFire","HDR"] },
+    { name:"Radeon HD 2000–4000 (TeraScale)", year:"2007–2009", node:"65–55nm", badge:"AMD", tagline:"Unified shader architektura, DirectX 10/10.1. HD 4870 velmi dobré poměr cena/výkon.", ipc:"–", tdp:"75–160W", cores:"320–1600", tech:["Unified Shaders","DX10.1","UVD (HW video)","CrossFireX","GDDR5"] },
+    { name:"Radeon HD 5000–6000 (TeraScale 2/3)", year:"2009–2011", node:"40nm", badge:"AMD", tagline:"HD 5870 první DX11 GPU na trhu. Eyefinity (až 6 monitorů). HDMI 1.4a.", ipc:"–", tdp:"27–228W", cores:"800–1536", tech:["DX11 jako první","Eyefinity","OpenCL 1.1","HW Tessellation"] },
+    { name:"Radeon HD 7000 (GCN 1.0)", year:"2011–2012", node:"28nm", badge:"AMD", tagline:"Nová GCN architektura – masivní GPGPU schopnosti. HD 7970 dominovalo.", ipc:"–", tdp:"100–250W", cores:"1024–2048", tech:["GCN architekt.","Compute queues","AMD APP","PCI-E 3.0","ZeroCore"] },
+    { name:"Radeon R9 200/300 (GCN 2/3)", year:"2013–2015", node:"28nm", badge:"AMD", tagline:"Mantle API (předchůdce Vulkanu/DX12), TrueAudio, FreeSync.", ipc:"–", tdp:"95–275W", cores:"1024–4096", tech:["Mantle API","TrueAudio","FreeSync","DX11.2","GCN 2/3"] },
+    { name:"RX 400/500 (Polaris, GCN 4)", year:"2016–2017", node:"14nm", badge:"AMD", tagline:"14nm přineslo velký efektivitní skok. RX 480 skvělý mainstream výkon.", ipc:"–", tdp:"75–185W", cores:"896–2304", tech:["14nm FinFET","DX12","Vulkan","HDMI 2.0","FreeSync 2"] },
+    { name:"RX Vega (GCN 5)", year:"2017–2018", node:"14nm", badge:"AMD", tagline:"HBM2 paměť, NCU (Next Compute Unit). Vega 64 konkurovala GTX 1080.", ipc:"–", tdp:"150–295W", cores:"2048–4096", tech:["HBM2","NCU","Rapid Packed Math","FP16","ROCm"] },
+    { name:"RX 5000 (RDNA 1)", year:"2019", node:"7nm TSMC", badge:"AMD", tagline:"Nová RDNA architektura, +50 % výkon/watt vs GCN. PCIe 4.0, GDDR6.", ipc:"+25 % IPC", tdp:"80–225W", cores:"1024–2560", tech:["RDNA 1.0","PCIe 4.0","GDDR6","NAVI čip","Radeon Image Sharpening"] },
+    { name:"RX 6000 (RDNA 2)", year:"2020", node:"7nm TSMC", badge:"AMD", tagline:"HW Ray Tracing, Infinity Cache (128MB), RX 6900 XT porazilo RTX 3080.", ipc:"+26 % IPC", tdp:"100–300W", cores:"1792–5120", tech:["RDNA 2","HW Ray Tracing","Infinity Cache","Smart Access Memory","FidelityFX SR 1.0"] },
+    { name:"RX 7000 (RDNA 3)", year:"2022", node:"5nm+6nm (chiplet)", badge:"AMD", tagline:"První chiplet GPU design (compute 5nm + cache 6nm). AI akcelerace, AV1 encode.", ipc:"+54 % perf/W", tdp:"54–355W", cores:"2048–6144", tech:["Chiplet GPU","RDNA 3","5nm+6nm","AI ACC","FSR 3","AV1 encode"] },
+    { name:"RX 9000 (RDNA 4)", year:"2025", node:"4nm TSMC N4P", badge:"AMD", tagline:"Masivní RT skok (2x), AI akcelerace, FSR 4 s ML upscalingem. RX 9070 XT vs RTX 5070.", ipc:"+35–40 % RT", tdp:"150–304W", cores:"3072–4096", tech:["RDNA 4","4nm TSMC","2x RT perf","AI Shaders","FSR 4 ML","DisplayPort 2.1"] },
+  ]
+};
+
+let currentCategory = 'cpu_intel';
+let expanded = null;
+
+function setCategory(cat, btn) {
+  currentCategory = cat;
+  expanded = null;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('search-input').value = '';
+  render();
+}
+
+function filterCards(query) {
+  render(query);
+}
+
+function toggle(idx) {
+  expanded = expanded === idx ? null : idx;
+  render(document.getElementById('search-input').value);
+}
+
+function render(query = '') {
+  const list = document.getElementById('gen-list');
+  const items = data[currentCategory];
+  const q = query.toLowerCase();
+  const filtered = items.filter(d =>
+    !q || d.name.toLowerCase().includes(q) || d.tech.some(t => t.toLowerCase().includes(q)) || d.tagline.toLowerCase().includes(q)
+  );
+  const badgeClass = currentCategory.includes('intel') ? 'intel-badge' : currentCategory.includes('nvidia') ? 'nvidia-badge' : 'amd-badge';
+
+  list.innerHTML = filtered.map((d) => {
+    const realIdx = items.indexOf(d);
+    const isExp = expanded === realIdx;
+    return `<div class="gen-card${isExp ? ' expanded' : ''}" onclick="toggle(${realIdx})">
+      <div class="gen-header">
+        <span class="gen-badge ${badgeClass}">${d.badge}</span>
+        <span class="gen-name">${d.name}</span>
+        <span class="gen-year">${d.year}</span>
+        <span class="gen-node">${d.node}</span>
+        <span class="arrow">&#9658;</span>
+      </div>
+      <div class="gen-tagline">${d.tagline}</div>
+      ${isExp ? `<div class="gen-detail">
+        <div class="detail-grid">
+          <div class="detail-item"><div class="detail-label">IPC / výkon</div><div class="detail-val">${d.ipc}</div></div>
+          <div class="detail-item"><div class="detail-label">TDP</div><div class="detail-val">${d.tdp}</div></div>
+          <div class="detail-item"><div class="detail-label">Jádra / jednotky</div><div class="detail-val">${d.cores}</div></div>
+          <div class="detail-item"><div class="detail-label">Výrobní uzel</div><div class="detail-val">${d.node}</div></div>
+        </div>
+        <div class="tech-tags">${d.tech.map(t => `<span class="tech-tag">${t}</span>`).join('')}</div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+render();
+</script>
+
+</body>
+</html>
